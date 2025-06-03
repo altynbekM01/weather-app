@@ -1,0 +1,69 @@
+<style>
+.suggestions-box {
+    border: 1px solid #ccc;
+    max-height: 150px;
+    overflow-y: auto;
+    background: white;
+    position: absolute;
+    z-index: 1000;
+}
+.suggestion-item {
+    padding: 5px;
+    cursor: pointer;
+}
+.suggestion-item:hover {
+    background-color: #f0f0f0;
+}
+</style>
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Погода по городу</title>
+</head>
+<body>
+    <h1>Узнай погоду</h1>
+
+    <form method="post" action="/weather">
+        <input type="text" id="city-input" name="city" placeholder="Введите город" autocomplete="off">
+        <div id="suggestions" class="suggestions-box"></div>
+        <button type="submit">Показать погоду</button>
+    </form>
+
+    {% if weather %}
+        <h2>Погода в {{ city }}</h2>
+        <p>Температура: {{ weather.temperature }}°C</p>
+        <p>Ветер: {{ weather.windspeed }} м/с</p>
+    {% endif %}
+</body>
+</html>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const input = document.getElementById("city-input");
+    const suggestionsBox = document.getElementById("suggestions");
+
+    input.addEventListener("input", async () => {
+        const query = input.value.trim();
+        if (query.length < 2) {
+            suggestionsBox.innerHTML = "";
+            return;
+        }
+
+        const res = await fetch(`/autocomplete?query=${encodeURIComponent(query)}`);
+        const suggestions = await res.json();
+
+        suggestionsBox.innerHTML = suggestions.map(city =>
+            `<div class="suggestion-item">${city}</div>`
+        ).join("");
+        document.querySelectorAll(".suggestion-item").forEach(item => {
+            item.addEventListener("click", () => {
+                input.value = item.textContent;
+                suggestionsBox.innerHTML = "";
+            });
+        });
+    });
+});
+</script>
+
